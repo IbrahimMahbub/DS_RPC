@@ -1,0 +1,96 @@
+from xmlrpc.server import SimpleXMLRPCServer
+from xmlrpc.server import SimpleXMLRPCRequestHandler
+import xml.etree.ElementTree as ET
+import threading
+import requests
+import os
+
+# XML Database File
+DB_FILE = "notes.xml"
+
+# Ensure XML file exists
+def init_db():
+    if not os.path.exists(DB_FILE):
+        root = ET.Element("data")
+        tree = ET.ElementTree(root)
+        tree.write(DB_FILE)
+
+# Add a new note
+def add_note(topic, note_name, text, timestamp):
+    tree = ET.parse(DB_FILE)
+    root = tree.getroot()
+
+    # Check if topic exists
+    topic_elem = None
+    for t in root.findall("topic"):
+        if t.attrib["name"] == topic:
+            topic_elem = t
+            break
+
+    # Create new topic if it doesn't exist
+    if topic_elem is None:
+        topic_elem = ET.SubElement(root, "topic", {"name": topic})
+
+    # Add new note under the topic
+    note_elem = ET.SubElement(topic_elem, "note", {"name": note_name})
+    text_elem = ET.SubElement(note_elem, "text")
+    text_elem.text = text
+    timestamp_elem = ET.SubElement(note_elem, "timestamp")
+    timestamp_elem.text = timestamp
+
+    # Save changes to XML file
+    tree.write(DB_FILE)
+    return f"Note added under topic '{topic}'."
+
+# Retrieve notes for a topic
+def get_notes(topic):
+    tree = ET.parse(DB_FILE)
+    root = tree.getroot()
+
+    for t in root.findall("topic"):
+        if t.attrib["name"] == topic:
+            notes = []
+            for note in t.findall("note"):
+                note_data = {
+                    "name": note.attrib["name"],
+                    "text": note.find("text").text,
+                    "timestamp": note.find("timestamp").text,
+                }
+                notes.append(note_data)
+            return notes
+    return f"No notes found for topic '{topic}'."
+
+# Fetch Wikipedia data
+def fetch_wikipedia_data(topic):
+    url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{topic}"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        data = response.json()
+        summary = data.get("extract", "No summary available.")
+        link = data.get("content_urls", {}).get("desktop", {}).get("page", "No link available.")
+
+        # Store Wikipedia data in XML
+        add_note(topic, "Wikipedia Summary", summary, "Auto-generated")
+
+        return {"summary": summary, "link": link}
+    else:
+        return f"Could not find Wikipedia data for '{topic}'."
+
+# Threaded server handler
+class RequestHandler(SimpleXMLRPCRequestHandler):
+    rpc_paths = ("/RPC2",)
+
+# Start server
+def run_server():
+    init_db()
+    server = SimpleXMLRPCServer(("localhost", 8000), requestHandler=RequestHandler, allow_none=True)
+    server.register_function(add_note, "add_note")
+    server.register_function(get_notes, "get_notes")
+    server.register_function(fetch_wikipedia_data, "fetch_wikipedia_data")
+
+    print("Server is running on port 8000...")
+    server.serve_forever()
+
+if __name__ == "__main__":
+    run_server()
