@@ -4,6 +4,7 @@ import datetime
 # Connect to the XML-RPC server
 server = xmlrpc.client.ServerProxy("http://localhost:8000/RPC2")
 
+#Get current timestamp 
 def get_current_timestamp():
     return datetime.datetime.now().strftime("%m/%d/%y - %H:%M:%S")
 
@@ -12,7 +13,7 @@ def add_note():
     note_name = input("Enter note title: ")
     text = input("Enter note text: ")
 
-    # Auto-generate timestamp but allow user to edit
+    # Automatic timestamp fillup
     default_timestamp = get_current_timestamp()
     timestamp = input(f"Enter timestamp (default: {default_timestamp}): ").strip()
     if timestamp == "":
@@ -22,7 +23,7 @@ def add_note():
     print(response)
 
 def get_notes():
-    topic = input("Enter topic to fetch notes: ")
+    topic = input("Enter topic to view available notes: ")
     notes = server.get_notes(topic)
 
     if isinstance(notes, list):
@@ -47,13 +48,13 @@ def fetch_wikipedia():
 
 def main():
     while True:
-        print("\n--- Notebook Client ---")
-        print("1. Add Note")
-        print("2. Retrieve Notes")
-        print("3. Fetch Wikipedia Info")
+        print("\n--- Ibrahim's Personal Notebook Application ---")
+        print("1. Add note")
+        print("2. View my notes")
+        print("3. Wikipedia Search")
         print("4. Exit")
 
-        choice = input("Choose an option: ")
+        choice = input("Choose an option to start: ")
 
         if choice == "1":
             add_note()
@@ -65,7 +66,7 @@ def main():
             print("Exiting client.")
             break
         else:
-            print("Invalid choice, try again.")
+            print("Invalid choice, try again from the list.")
 
 if __name__ == "__main__":
     main()
