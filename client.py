@@ -4,7 +4,7 @@ import datetime
 # Connect to the XML-RPC server
 server = xmlrpc.client.ServerProxy("http://localhost:8000/RPC2")
 
-#Get current timestamp 
+#Get current timestamp from the host 
 def get_current_timestamp():
     return datetime.datetime.now().strftime("%m/%d/%y - %H:%M:%S")
 
@@ -13,7 +13,7 @@ def add_note():
     note_name = input("Enter note title: ")
     text = input("Enter note text: ")
 
-    # Automatic timestamp fillup
+    # Automatic timestamp fillup for timestamp form also allow manual inputs
     default_timestamp = get_current_timestamp()
     timestamp = input(f"Enter timestamp (default: {default_timestamp}): ").strip()
     if timestamp == "":

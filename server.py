@@ -83,9 +83,9 @@ def fetch_wikipedia_data(topic):
 
 # Multi-threaded XML-RPC server
 class ThreadingXMLRPCServer(SimpleXMLRPCServer):
-    #This is a multi-threaded XML-RPC server to handle multiple clients at once
+    #This is a multi-threaded XML-RPC server to handle multiple clients request at once
     def process_request_thread(self, request, client_address):
-        #This handle each request in a new thread
+        #This handle each incoming request in a new thread
         try:
             self.finish_request(request, client_address)
             self.shutdown_request(request)
