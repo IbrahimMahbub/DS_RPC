@@ -1,13 +1,22 @@
 import xmlrpc.client
+import datetime
 
 # Connect to the XML-RPC server
 server = xmlrpc.client.ServerProxy("http://localhost:8000/RPC2")
+
+def get_current_timestamp():
+    return datetime.datetime.now().strftime("%m/%d/%y - %H:%M:%S")
 
 def add_note():
     topic = input("Enter topic: ")
     note_name = input("Enter note title: ")
     text = input("Enter note text: ")
-    timestamp = input("Enter timestamp (e.g., MM/DD/YY - HH:MM:SS): ")
+
+    # Auto-generate timestamp but allow user to edit
+    default_timestamp = get_current_timestamp()
+    timestamp = input(f"Enter timestamp (default: {default_timestamp}): ").strip()
+    if timestamp == "":
+        timestamp = default_timestamp
 
     response = server.add_note(topic, note_name, text, timestamp)
     print(response)
@@ -17,7 +26,7 @@ def get_notes():
     notes = server.get_notes(topic)
 
     if isinstance(notes, list):
-        print(f"Notes for '{topic}':")
+        print(f"\nNotes for '{topic}':")
         for note in notes:
             print(f"\nTitle: {note['name']}")
             print(f"Text: {note['text']}")

@@ -1,9 +1,9 @@
-from xmlrpc.server import SimpleXMLRPCServer
-from xmlrpc.server import SimpleXMLRPCRequestHandler
+from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 import xml.etree.ElementTree as ET
 import threading
 import requests
 import os
+import datetime
 
 # XML Database File
 DB_FILE = "notes.xml"
@@ -15,10 +15,18 @@ def init_db():
         tree = ET.ElementTree(root)
         tree.write(DB_FILE)
 
-# Add a new note
-def add_note(topic, note_name, text, timestamp):
+# Get current timestamp
+def get_current_timestamp():
+    return datetime.datetime.now().strftime("%m/%d/%y - %H:%M:%S")
+
+# Add a new note to XML
+def add_note(topic, note_name, text, timestamp=None):
     tree = ET.parse(DB_FILE)
     root = tree.getroot()
+
+    # If no timestamp is given, auto-generate it
+    if timestamp is None:
+        timestamp = get_current_timestamp()
 
     # Check if topic exists
     topic_elem = None
@@ -60,7 +68,7 @@ def get_notes(topic):
             return notes
     return f"No notes found for topic '{topic}'."
 
-# Fetch Wikipedia data
+# Fetch Wikipedia data and store it in XML
 def fetch_wikipedia_data(topic):
     url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{topic}"
     response = requests.get(url)
@@ -70,8 +78,10 @@ def fetch_wikipedia_data(topic):
         summary = data.get("extract", "No summary available.")
         link = data.get("content_urls", {}).get("desktop", {}).get("page", "No link available.")
 
-        # Store Wikipedia data in XML
-        add_note(topic, "Wikipedia Summary", summary, "Auto-generated")
+        # Store Wikipedia data in XML with auto-generated timestamp
+        timestamp = get_current_timestamp()
+        wiki_note = f"{summary}\n\nRead more: {link}"
+        add_note(topic, "Wikipedia Summary", wiki_note, timestamp)
 
         return {"summary": summary, "link": link}
     else:
